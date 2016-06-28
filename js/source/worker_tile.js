@@ -31,7 +31,7 @@ WorkerTile.prototype.parse = function(data, layerFamilies, actor, rawTileData, c
     this.collisionBoxArray = new CollisionBoxArray();
     this.symbolInstancesArray = new SymbolInstancesArray();
     this.symbolQuadsArray = new SymbolQuadsArray();
-    var collisionTile = new CollisionTile(this.angle, this.pitch, this.collisionBoxArray);
+    var collisionTile = this.collisionTile = new CollisionTile(this.angle, this.pitch, this.collisionBoxArray);
     var featureIndex = new FeatureIndex(this.coord, this.overscaling, collisionTile, data.layers);
     var sourceLayerCoder = new DictionaryCoder(data.layers ? Object.keys(data.layers).sort() : ['_geojsonTileLayer']);
 
@@ -130,6 +130,9 @@ WorkerTile.prototype.parse = function(data, layerFamilies, actor, rawTileData, c
             otherBuckets.push(bucket);
     }
 
+    this.buckets = buckets;
+    this.otherBuckets = otherBuckets;
+
     var icons = {};
     var stacks = {};
     var deps = 0;
@@ -196,7 +199,7 @@ WorkerTile.prototype.parse = function(data, layerFamilies, actor, rawTileData, c
             }
         }
 
-        bucket.features = null;
+        // bucket.features = null;
 
         stats._total += time;
         stats[bucket.id] = (stats[bucket.id] || 0) + time;
@@ -231,6 +234,105 @@ WorkerTile.prototype.parse = function(data, layerFamilies, actor, rawTileData, c
         }, getTransferables(nonEmptyBuckets).concat(transferables));
     }
 };
+
+WorkerTile.prototype.updateProperties = function(data, layerFamilies, actor, rawTileData, callback) {
+    if (!this.data) { return this.parse(data, layerFamilies, actor, rawTileData, callback); }
+
+    // load up data cached from initial parse()
+    var collisionTile = this.collisionTile,
+        buckets = this.buckets,
+        symbolBuckets = this.symbolBuckets,
+        otherBuckets = this.otherBuckets;
+
+    var tile = this;
+
+    var icons = {};
+    var stacks = {};
+    var deps = 0;
+
+    var i = 0;
+
+    if (symbolBuckets.length > 0) {
+
+        // Get dependencies for symbol buckets
+        for (i = symbolBuckets.length - 1; i >= 0; i--) {
+            symbolBuckets[i].updateIcons(icons);
+            symbolBuckets[i].updateFont(stacks);
+        }
+
+        for (var fontName in stacks) {
+            stacks[fontName] = Object.keys(stacks[fontName]).map(Number);
+        }
+        icons = Object.keys(icons);
+
+        actor.send('get glyphs', {uid: this.uid, stacks: stacks}, function(err, newStacks) {
+            stacks = newStacks;
+            gotDependency(err);
+        });
+
+        if (icons.length) {
+            actor.send('get icons', {icons: icons}, function(err, newIcons) {
+                icons = newIcons;
+                gotDependency(err);
+            });
+        } else {
+            gotDependency();
+        }
+    }
+
+    // immediately parse non-symbol buckets (they have no dependencies)
+    for (i = otherBuckets.length - 1; i >= 0; i--) {
+        parseBucket(this, otherBuckets[i]);
+    }
+
+    if (symbolBuckets.length === 0)
+        return done();
+
+    function gotDependency(err) {
+        if (err) return callback(err);
+        deps++;
+        if (deps === 2) {
+            // all symbol bucket dependencies fetched; parse them in proper order
+            for (var i = symbolBuckets.length - 1; i >= 0; i--) {
+                parseBucket(tile, symbolBuckets[i]);
+            }
+            done();
+        }
+    }
+
+    function parseBucket(tile, bucket) {
+        bucket.updateBuffers(collisionTile, stacks, icons);
+    }
+
+    function done() {
+        tile.status = 'done';
+
+        if (tile.redoPlacementAfterDone) {
+            tile.redoPlacement(tile.angle, tile.pitch, null);
+            tile.redoPlacementAfterDone = false;
+        }
+
+        // var featureIndex_ = featureIndex.serialize();
+        var collisionTile_ = collisionTile.serialize();
+        var collisionBoxArray = tile.collisionBoxArray.serialize();
+        var symbolInstancesArray = tile.symbolInstancesArray.serialize();
+        var symbolQuadsArray = tile.symbolQuadsArray.serialize();
+        var transferables = [rawTileData].concat([ null ]).concat(collisionTile_.transferables);
+
+        var nonEmptyBuckets = buckets.filter(isBucketEmpty);
+
+        callback(null, {
+            buckets: nonEmptyBuckets.map(serializeBucket),
+            featureIndex: null,
+            collisionTile: collisionTile_.data,
+            collisionBoxArray: collisionBoxArray,
+            symbolInstancesArray: symbolInstancesArray,
+            symbolQuadsArray: symbolQuadsArray,
+            rawTileData: rawTileData
+        }, getTransferables(nonEmptyBuckets).concat(transferables));
+    }
+};
+
 
 WorkerTile.prototype.redoPlacement = function(angle, pitch, showCollisionBoxes) {
     if (this.status !== 'done') {

@@ -108,6 +108,7 @@ function Bucket(options) {
  * @private
  */
 Bucket.prototype.populateBuffers = function() {
+    this._featureArrayIndexes = [];
     this.createArrays();
     this.recalculateStyleLayers();
 
@@ -117,6 +118,24 @@ Bucket.prototype.populateBuffers = function() {
 
     this.trimArrays();
 };
+
+/**
+ * Update the buffers with feature properties, leaving geometries as-is.
+ * @private
+ */
+Bucket.prototype.updateBuffers = function() {
+    this.recalculateStyleLayers();
+
+    if (!this._featureArrayIndexes || this._featureArrayIndexes.length !== this.features.length) {
+        return;
+    }
+
+    for (var i = 0; i < this.features.length; i++) {
+        var indexes = this._featureArrayIndexes[i];
+        this.populatePaintArrays('fill', {zoom: this.zoom}, this.features[i].properties, indexes.startGroup, indexes.startIndex, indexes.endGroup, indexes.endIndex);
+    }
+};
+
 
 /**
  * Check if there is enough space available in the current array group for
@@ -319,11 +338,12 @@ Bucket.prototype.recalculateStyleLayers = function() {
     }
 };
 
-Bucket.prototype.populatePaintArrays = function(interfaceName, globalProperties, featureProperties, startGroup, startIndex) {
+Bucket.prototype.populatePaintArrays = function(interfaceName, globalProperties, featureProperties, startGroup, startIndex, endGroup, endIndex) {
     for (var l = 0; l < this.childLayers.length; l++) {
         var layer = this.childLayers[l];
         var groups = this.arrayGroups[interfaceName];
-        for (var g = startGroup.index; g < groups.length; g++) {
+        var endGroupIndex = endGroup ? endGroup.index + 1 : groups.length;
+        for (var g = startGroup.index; g < endGroupIndex; g++) {
             var group = groups[g];
             var length = group.layout.vertex.length;
             var vertexArray = group.paint[layer.id];
@@ -337,7 +357,9 @@ Bucket.prototype.populatePaintArrays = function(interfaceName, globalProperties,
                 var multiplier = attribute.multiplier || 1;
                 var components = attribute.components || 1;
 
-                for (var i = startIndex; i < length; i++) {
+                var start = g === startGroup.index ? startIndex : 0;
+                var end = (endGroup && g === endGroup.index) ? (endIndex + 1) : length;
+                for (var i = start; i < end; i++) {
                     var vertex = vertexArray.get(i);
                     for (var c = 0; c < components; c++) {
                         var memberName = components > 1 ? (attribute.name + c) : attribute.name;
