@@ -131,13 +131,13 @@ Bucket.prototype.populateBuffers = function() {
  * as-is.
  * @private
  */
-Bucket.prototype.updatePaintArrays = function(propertiesList) {
+Bucket.prototype.updatePaintArrays = function(interfaceName, propertiesList) {
     this.recalculateStyleLayers();
 
     for (var i = 0; i < propertiesList.length; i++) {
-        var indexes = this._featureIndexToArrayIndex[i];
-        if (!indexes) continue;
-        this.populatePaintArrays('fill', {zoom: this.zoom}, propertiesList[i], indexes.startGroup, indexes.startVertex, indexes.endGroup, indexes.endVertex);
+        var range = this._featureIndexToArrayRange[i];
+        if (!range) continue;
+        this.populatePaintArrays(interfaceName, {zoom: this.zoom}, propertiesList[i], range);
     }
 };
 
@@ -223,7 +223,7 @@ Bucket.prototype.createArrays = function() {
     // mapping from `feature.index` to the start & end vertex array indexes.
     // `feature.index` is the index into the _original_ source layer's feature
     // list (as opposed to this bucket's post-filtered list).
-    this._featureIndexToArrayIndex = {};
+    this._featureIndexToArrayRange = {};
     this.arrayGroups = {};
     this.arrayTypes = {};
 
@@ -358,7 +358,7 @@ Bucket.prototype.recalculateStyleLayers = function() {
 
 Bucket.prototype.populatePaintArrays = function(interfaceName, globalProperties, featureProperties, arrayRange, featureIndex) {
     if (typeof featureIndex !== 'undefined') {
-        this._featureIndexToArrayIndex[featureIndex] = arrayRange;
+        this._featureIndexToArrayRange[featureIndex] = arrayRange;
     }
 
     for (var l = 0; l < this.childLayers.length; l++) {

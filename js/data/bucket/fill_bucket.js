@@ -119,3 +119,8 @@ FillBucket.prototype.addPolygon = function(polygon) {
         group.layout.element.emplaceBack(triangleIndices[i] + startIndex);
     }
 };
+
+FillBucket.prototype.updateFeatureProperties = function (propertiesList) {
+    this.updatePaintArrays('fill', propertiesList);
+};
+

@@ -257,8 +257,9 @@ WorkerTile.prototype.updateProperties = function(data, layerFamilies, actor, raw
 
     // immediately parse non-symbol buckets (they have no dependencies)
     for (var i = otherBuckets.length - 1; i >= 0; i--) {
+        if (!otherBuckets[i].updateFeatureProperties) continue;
         var properties = data[otherBuckets[i].layer.sourceLayer];
-        otherBuckets[i].updatePaintArrays(properties || []);
+        otherBuckets[i].updateFeatureProperties(properties || []);
     }
 
     // this will probably be async once we include the symbol stuff

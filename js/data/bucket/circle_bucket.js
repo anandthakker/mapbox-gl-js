@@ -127,3 +127,8 @@ CircleBucket.prototype.addFeature = function(feature) {
 
     this.populatePaintArrays('circle', globalProperties, feature.properties, range, feature.index);
 };
+
+CircleBucket.prototype.updateFeatureProperties = function (propertiesList) {
+    this.updatePaintArrays('circle', propertiesList);
+};
+
