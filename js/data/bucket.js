@@ -346,19 +346,33 @@ Bucket.prototype.recalculateStyleLayers = function() {
     }
 };
 
-Bucket.prototype.populatePaintArrays = function(interfaceName, globalProperties, featureProperties, startGroupIndex, startVertexIndex, endGroupIndex, endVertexIndex) {
+
+/**
+ * @typedef {object} ArrayRange
+ * @property {number} arrayRange.startGroup
+ * @property {number} arrayRange.startVertex
+ * @property {number} arrayRange.endGroup
+ * @property {number} arrayRange.endVertex
+ * @private
+ */
+
+Bucket.prototype.populatePaintArrays = function(interfaceName, globalProperties, featureProperties, arrayRange, featureIndex) {
+    if (typeof featureIndex !== 'undefined') {
+        this._featureIndexToArrayIndex[featureIndex] = arrayRange;
+    }
+
     for (var l = 0; l < this.childLayers.length; l++) {
         var layer = this.childLayers[l];
         var groups = this.arrayGroups[interfaceName];
 
-        for (var g = startGroupIndex; g <= endGroupIndex; g++) {
+        for (var g = arrayRange.startGroup; g <= arrayRange.endGroup; g++) {
             var group = groups[g];
             var length = group.layout.vertex.length;
             var vertexArray = group.paint[layer.id];
             vertexArray.resize(length);
 
-            var start = g === startGroupIndex ? startVertexIndex : 0;
-            var end = g === endGroupIndex ? endVertexIndex : length - 1;
+            var start = g === arrayRange.startGroup ? arrayRange.startVertex : 0;
+            var end = g === arrayRange.endGroup ? arrayRange.endVertex : length - 1;
 
             var attributes = this.paintAttributes[interfaceName][layer.id].attributes;
             for (var m = 0; m < attributes.length; m++) {

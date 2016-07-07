@@ -66,7 +66,7 @@ FillBucket.prototype.addFeature = function(feature) {
     var startGroup = this.prepareArrayGroup('fill', 0);
     var startVertex = startGroup.layout.vertex.length;
 
-    var indexes = {
+    var range = {
         startGroup: this.arrayGroups['fill'].length - 1,
         startVertex: startVertex
     };
@@ -76,11 +76,10 @@ FillBucket.prototype.addFeature = function(feature) {
     }
 
     var endGroupIndex = this.arrayGroups['fill'].length - 1;
-    indexes.endGroup = endGroupIndex;
-    indexes.endVertex = this.arrayGroups['fill'][endGroupIndex].layout.vertex.length - 1;
-    this._featureIndexToArrayIndex[feature.index] = indexes;
+    range.endGroup = endGroupIndex;
+    range.endVertex = this.arrayGroups['fill'][endGroupIndex].layout.vertex.length - 1;
 
-    this.populatePaintArrays('fill', {zoom: this.zoom}, feature.properties, indexes.startGroup, indexes.startVertex, indexes.endGroup, indexes.endVertex);
+    this.populatePaintArrays('fill', {zoom: this.zoom}, feature.properties, range, feature.index);
 };
 
 FillBucket.prototype.addPolygon = function(polygon) {

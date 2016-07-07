@@ -117,8 +117,13 @@ CircleBucket.prototype.addFeature = function(feature) {
         }
     }
 
-    var endGroupIndex = this.arrayGroups['circle'].length - 1;
-    var endVertexIndex = this.arrayGroups['circle'][endGroupIndex].layout.vertex.length - 1;
+    var groups = this.arrayGroups['circle'];
+    var range = {
+        startGroup: startGroup.index,
+        startVertex: startIndex,
+        endGroup: groups.length - 1,
+        endVertex: groups[groups.length - 1].layout.vertex.length - 1
+    };
 
-    this.populatePaintArrays('circle', globalProperties, feature.properties, startGroup.index, startIndex, endGroupIndex, endVertexIndex);
+    this.populatePaintArrays('circle', globalProperties, feature.properties, range, feature.index);
 };
