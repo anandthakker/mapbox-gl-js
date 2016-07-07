@@ -104,9 +104,8 @@ WorkerTile.prototype.parse = function(data, layerFamilies, actor, rawTileData, c
             var feature = layer.feature(i);
             feature.index = i;
             for (var id in buckets) {
-                if (buckets[id].filter(feature)) {
+                if (buckets[id].filter(feature))
                     buckets[id].features.push(feature);
-                }
             }
         }
     }

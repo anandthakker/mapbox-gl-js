@@ -120,5 +120,5 @@ CircleBucket.prototype.addFeature = function(feature) {
     var endGroupIndex = this.arrayGroups['circle'].length - 1;
     var endVertexIndex = this.arrayGroups['circle'][endGroupIndex].layout.vertex.length - 1;
 
-    this.populatePaintArrays('circle', globalProperties, feature.properties, startGroup.index, startIndex, this.arrayGroups.length - 1, endGroupIndex, endVertexIndex);
+    this.populatePaintArrays('circle', globalProperties, feature.properties, startGroup.index, startIndex, endGroupIndex, endVertexIndex);
 };
