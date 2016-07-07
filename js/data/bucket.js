@@ -127,10 +127,11 @@ Bucket.prototype.populateBuffers = function() {
 };
 
 /**
- * Update the buffers with feature properties, leaving geometries as-is.
+ * Update paint arrays with the given feature properties, leaving geometries
+ * as-is.
  * @private
  */
-Bucket.prototype.updateBuffers = function(propertiesList) {
+Bucket.prototype.updatePaintArrays = function(propertiesList) {
     this.recalculateStyleLayers();
 
     for (var i = 0; i < propertiesList.length; i++) {
