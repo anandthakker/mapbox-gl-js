@@ -2,6 +2,9 @@
 
 var util = require('../util/util');
 
+// TEMPORARY
+window.DynamicVectorSource = require('../source/dynamic_vector_source');
+
 var sourceTypes = {
     'vector': require('../source/vector_tile_source'),
     'raster': require('../source/raster_tile_source'),

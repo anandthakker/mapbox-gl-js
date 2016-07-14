@@ -65,51 +65,38 @@ map.addControl(new mapboxgl.Navigation());
 map.addControl(new mapboxgl.Geolocate());
 
 map.on('load', function() {
-    map.addSource('geojson', {
-        "type": "geojson",
-        "data": "mapbox-gl-test-suite/data/linestring.geojson"
-    });
+    map.addSourceType('vector-dynamic', DynamicVectorSource, function () {
+        map.addSource('iowa', {
+            "type": "vector-dynamic",
+            "url": "mapbox://devseed.ia-pop-z10"
+        });
 
-    map.addLayer({
-        "id": "route",
-        "type": "line",
-        "source": "geojson",
-        "paint": {
-            "line-color": "#EC8D8D",
-            "line-width": {
-                "base": 1.5,
-                "stops": [
-                    [
-                        5,
-                        0.75
-                    ],
-                    [
-                        18,
-                        32
+        map.addLayer({
+            "id": "dots",
+            "type": "circle",
+            "source": "iowa",
+            "source-layer": "ia",
+            "paint": {
+                "circle-color": '#000000',
+                "circle-opacity": 0.2,
+                "circle-radius": {
+                    "property": "foo",
+                    "base": 1,
+                    "stops": [
+                        [
+                            0,
+                            10
+                        ],
+                        [
+                            100,
+                            1
+                        ]
                     ]
-                ]
+                }
             }
-        }
-    }, 'country-label-lg');
+        }, 'country-label-lg');
 
-    var bufferTimes = {};
-    map.on('tile.stats', function(bufferTimes) {
-        var _stats = [];
-        for (var name in bufferTimes) {
-            var value = Math.round(bufferTimes[name]);
-            if (isNaN(value)) continue;
-            var width = value;
-            _stats.push({name: name, value: value, width: width});
-        }
-        _stats = _stats.sort(function(a, b) { return b.value - a.value }).slice(0, 10);
-
-        var html = '';
-        for (var i in _stats) {
-            html += '<div style="width:' + _stats[i].width * 2 + 'px">' + _stats[i].value + 'ms - ' + _stats[i].name + '</div>';
-        }
-
-        document.getElementById('buffer').innerHTML = html;
-    });
+    })
 });
 
 map.on('click', function(e) {
